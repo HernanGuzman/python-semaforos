@@ -3,9 +3,11 @@ import time
 import logging
 import threading
 
+from cola import Cola
 from tiempo import Contador
 
 logging.basicConfig(format='%(asctime)s.%(msecs)03d [%(threadName)s] - %(message)s', datefmt='%H:%M:%S', level=logging.INFO)
+
 
 
 img_urls = [
@@ -39,13 +41,42 @@ tiempo = Contador()
 
 tiempo.iniciar()
 
+'''
 # una por una
 for url in img_urls:
     bajar_imagen(url)
 
 tiempo.finalizar()
 tiempo.imprimir()
+'''
 
-
-
+'''
 # Pero ahora con threads
+for url in img_urls:
+    t = threading.Thread(target=bajar_imagen(url))
+    t.start()
+
+tiempo.finalizar()
+tiempo.imprimir()
+'''
+# Pero ahora con 3 threads
+#CREO UN SEMAFORO DE TRES 
+semaphore = threading.Semaphore(3)
+class Descargas(threading.Thread):
+    def __init__(self, url):
+        super().__init__()
+        self.url = url
+
+    def run(self):
+        semaphore.acquire()
+        bajar_imagen(self.url)
+        semaphore.release()
+
+
+for url in img_urls:
+    Descargas(url).start()
+
+
+tiempo.finalizar()
+tiempo.imprimir()
+
